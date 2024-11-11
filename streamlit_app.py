@@ -1,6 +1,10 @@
 import streamlit as st
 from openai import OpenAI
-from anthropic import Anthropic
+try:
+    from anthropic import Anthropic
+except ImportError:
+    st.error("Failed to import Anthropic. Please check if the package is installed correctly.")
+    st.stop()
 import json
 
 # Initialize API clients
