@@ -78,24 +78,31 @@ def main():
                 with st.spinner('Processing...'):
                     try:
                         data = {
-                            'query': user_input,
-                            'agent_type': agent_name,
-                            'model': agent_info['model']
+                            "query": user_input,
+                            "agent_type": agent_name,
+                            "model": agent_info['model']
                         }
                         
                         response = requests.post(
                             'http://localhost:8000/api/pr-agent',
-                            json=data
+                            json=data,
+                            headers={'Content-Type': 'application/json'}
                         )
                         
-                        result = response.json()
-                        
-                        if result['status'] == 'success':
-                            st.session_state.messages.extend([
-                                {"role": "user", "content": user_input},
-                                {"role": "assistant", "content": result['response']}
-                            ])
-                            st.rerun()
+                        if response.status_code == 200:
+                            result = response.json()
+                            if result['status'] == 'success':
+                                st.session_state.messages.extend([
+                                    {"role": "user", "content": user_input},
+                                    {"role": "assistant", "content": result['response']}
+                                ])
+                                st.rerun()
+                            else:
+                                st.error(f"Server error: {response.text}")
+                        else:
+                            st.error(f"Server error: {response.text}")
+                    except requests.exceptions.ConnectionError:
+                        st.error("Cannot connect to backend server. Please make sure it's running on port 8000.")
                     except Exception as e:
                         st.error(f"An error occurred: {str(e)}")
 
