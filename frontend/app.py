@@ -5,106 +5,99 @@ import json
 
 # PR Agents configuration
 PR_AGENTS = {
-    "content_strategist": {
-        "title": "Content Strategist",
-        "description": "Content creation and brand voice management",
-        "placeholder": "What content would you like me to help with?",
-        "model": "gpt-4-turbo"
+    "Media Relations": {
+        "model": "gpt-4",
+        "instructions": """
+        **Media Relations Agent Instructions:**
+        1. Share your press release draft or media query
+        2. The agent will review and enhance media communications
+        3. Focus on newsworthy angles and media-friendly formatting
+        """
     },
-    "crisis_manager": {
-        "title": "Crisis Manager",
-        "description": "Crisis response and risk management",
-        "placeholder": "Describe the situation that needs addressing...",
-        "model": "gpt-4"
+    "Crisis Comms": {
+        "model": "gpt-4",
+        "instructions": """
+        **Crisis Communications Agent Instructions:**
+        1. Describe the situation or share crisis statement
+        2. The agent will help craft appropriate responses
+        3. Focus on reputation management and stakeholder communication
+        """
     },
-    "media_relations": {
-        "title": "Media Relations",
-        "description": "Press releases and media communications",
-        "placeholder": "What would you like to communicate to the media?",
-        "model": "gpt-4-turbo"
+    "Content Strategy": {
+        "model": "gpt-4",
+        "instructions": """
+        **Content Strategy Agent Instructions:**
+        1. Share your content goals or materials
+        2. The agent will provide strategic recommendations
+        3. Focus on brand voice, messaging, and content optimization
+        """
     },
-    "analytics_expert": {
-        "title": "Analytics Expert",
-        "description": "Content and sentiment analysis",
-        "placeholder": "What would you like me to analyze?",
-        "model": "claude-3"
+    "Social Media": {
+        "model": "gpt-4",
+        "instructions": """
+        **Social Media PR Agent Instructions:**
+        1. Share your social media content or campaign ideas
+        2. The agent will optimize for platform-specific engagement
+        3. Focus on trending topics and audience engagement
+        """
     },
-    "visual_creator": {
-        "title": "Visual Creator",
-        "description": "Visual content generation and guidance",
-        "placeholder": "Describe the visual content you need...",
-        "model": "dall-e-3"
+    "Analytics": {
+        "model": "gpt-4",
+        "instructions": """
+        **PR Analytics Agent Instructions:**
+        1. Share your PR campaign data or metrics
+        2. The agent will analyze performance and impact
+        3. Focus on KPIs, sentiment analysis, and ROI measurement
+        """
     }
 }
 
-# Initialize session state
-if 'messages' not in st.session_state:
-    st.session_state.messages = []
+def main():
+    st.title("PR Agent Chat")
+    
+    # Initialize chat history
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+        
+    # Create tabs for each agent
+    agent_tabs = st.tabs(list(PR_AGENTS.keys()))
+    
+    for tab, (agent_name, agent_info) in zip(agent_tabs, PR_AGENTS.items()):
+        with tab:
+            # Instructions section
+            with st.expander("Instructions", expanded=False):
+                st.markdown(agent_info['instructions'])
+            
+            # Display chat history
+            for message in st.session_state.messages:
+                with st.chat_message(message["role"]):
+                    st.markdown(message["content"])
+            
+            # Chat input
+            if user_input := st.chat_input(f"Message {agent_name}..."):
+                with st.spinner('Processing...'):
+                    try:
+                        data = {
+                            'query': user_input,
+                            'agent_type': agent_name,
+                            'model': agent_info['model']
+                        }
+                        
+                        response = requests.post(
+                            'http://localhost:8000/api/pr-agent',
+                            json=data
+                        )
+                        
+                        result = response.json()
+                        
+                        if result['status'] == 'success':
+                            st.session_state.messages.extend([
+                                {"role": "user", "content": user_input},
+                                {"role": "assistant", "content": result['response']}
+                            ])
+                            st.rerun()
+                    except Exception as e:
+                        st.error(f"An error occurred: {str(e)}")
 
-# Page config
-st.title("PR AI Agent")
-
-# Agent selection
-selected_agent = st.selectbox(
-    "Select PR Agent",
-    options=list(PR_AGENTS.keys()),
-    format_func=lambda x: PR_AGENTS[x]["title"]
-)
-
-# Display agent info
-if selected_agent:
-    st.info(PR_AGENTS[selected_agent]["description"])
-
-# Input area
-user_input = st.text_area(
-    "Message",
-    placeholder=PR_AGENTS[selected_agent]["placeholder"],
-    height=150
-)
-
-# File uploader
-uploaded_file = st.file_uploader(
-    "Upload a file (optional)",
-    type=['txt', 'md', 'pdf', 'doc', 'docx']
-)
-
-# Send button
-if st.button("Send", type="primary"):
-    if user_input or uploaded_file:
-        with st.spinner('Processing...'):
-            try:
-                # Prepare the request data
-                data = {
-                    'query': user_input,
-                    'agent_type': selected_agent,
-                    'model': PR_AGENTS[selected_agent]['model']
-                }
-                
-                files = {}
-                if uploaded_file:
-                    files = {'file': uploaded_file.getvalue()}
-
-                # Make API call
-                response = requests.post(
-                    'http://localhost:8000/api/pr-agent',
-                    data=data,
-                    files=files
-                )
-                
-                result = response.json()
-                
-                if result['status'] == 'success':
-                    # Add messages to history with clean format
-                    st.session_state.messages.extend([
-                        {"role": "user", "content": user_input},
-                        {"role": "assistant", "content": result['response']}
-                    ])
-                    st.rerun()
-            except Exception as e:
-                st.error(f"An error occurred: {str(e)}")
-
-# Display messages
-if st.session_state.messages:
-    for msg in st.session_state.messages:
-        with st.chat_message(msg["role"]):
-            st.write(msg["content"])
+if __name__ == "__main__":
+    main()
