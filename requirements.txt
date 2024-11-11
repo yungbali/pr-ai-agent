@@ -17,4 +17,7 @@ httpx==0.27.0
 # Optional utilities
 python-jose==3.3.0  # For JWT handling if needed
 passlib==1.7.4      # For password hashing if needed
-bcrypt==4.1.2       # For password hashing if needed 
+bcrypt==4.1.2       # For password hashing if needed
+
+# Streamlit extras
+streamlit-extras==0.3.6
