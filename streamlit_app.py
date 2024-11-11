@@ -1,15 +1,26 @@
 import streamlit as st
 from openai import OpenAI
-try:
-    from anthropic import Anthropic
-except ImportError:
-    st.error("Failed to import Anthropic. Please check if the package is installed correctly.")
-    st.stop()
+from anthropic import Anthropic
 import json
 
-# Initialize API clients
-openai_client = OpenAI(api_key=st.secrets["api_keys"]["OPENAI_API_KEY"])
-anthropic_client = Anthropic(api_key=st.secrets["api_keys"]["ANTHROPIC_API_KEY"])
+# Initialize API clients with more graceful error handling
+try:
+    openai_client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+except KeyError:
+    st.error("OpenAI API key not found in secrets. Please add it in Streamlit Cloud.")
+    st.stop()
+
+try:
+    anthropic_client = Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
+except KeyError:
+    st.error("Anthropic API key not found in secrets. Please add it in Streamlit Cloud.")
+    st.stop()
+
+try:
+    nvidia_api_key = st.secrets["NVIDIA_API_KEY"]
+except KeyError:
+    st.error("NVIDIA API key not found in secrets. Please add it in Streamlit Cloud.")
+    st.stop()
 
 # PR Agents Configuration
 PR_AGENTS = {
