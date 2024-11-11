@@ -5,6 +5,7 @@ python-multipart==0.0.9
 openai==1.12.0
 python-dotenv==1.0.1
 pydantic==2.6.3
+anthropic==0.1.0
 
 # Frontend dependencies
 streamlit==1.32.0
