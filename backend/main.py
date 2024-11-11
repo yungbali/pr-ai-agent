@@ -1,8 +1,17 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from utils.failover import FailoverHandler
+import os
+import openai
+
+# Set your API keys
+os.environ["OPENAI_API_KEY"] = "your-openai-key"
+os.environ["ANTHROPIC_API_KEY"] = "your-anthropic-key"
+# Add NVIDIA API key setup
 
 app = FastAPI()
+failover_handler = FailoverHandler()
 
 # Enable CORS
 app.add_middleware(
@@ -12,6 +21,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+PR_AGENTS = {
+    "reviewer": {
+        "title": "Code Reviewer",
+        "description": "You review code changes and provide constructive feedback."
+    },
+    "improver": {
+        "title": "Code Improver",
+        "description": "You suggest improvements and optimizations for code."
+    }
+    # Add more agent types as needed
+}
 
 class PRRequest(BaseModel):
     query: str
